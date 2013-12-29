@@ -8,8 +8,10 @@ import org.apache.poi.hssf.usermodel.HSSFRow
 
 
 class Billing {
+    var log = new LoggerX
   
 	def ExecuteFile(infile:String, actionDslFile:String)={
+    	log.println
 	  	import java.util.Date
 	   	var book = new HSSFWorkbook()
 	   	var sheet = book.createSheet()
@@ -66,6 +68,7 @@ class Billing {
   
   
    def popPriceSheetNum(actionDsl:Map[String,List[List[String]]], pattkey:String):Int={
+    		log.println
 		   try{
 			   actionDsl(pattkey+".pricesheet")(0)(1).split('.')(0).toInt
 		   }catch{
@@ -74,6 +77,7 @@ class Billing {
    }
   
    def Analyze(infile:String, actionDslFile:String):DslUnit={
+    	log.println
 		var actionDsl = new Excel().ReadExcel(new Excel().getSheet(actionDslFile,0),13,0)
 	    var containingFolder = new File(infile).getParent()
 	    val pattkey = new Billing().popPatternKey(containingFolder, actionDsl)
@@ -95,6 +99,7 @@ class Billing {
 	}
   
 	def setHeader(actionDsl:Map[String,List[List[String]]], fileSpecification:String):List[List[String]]={
+    		log.println
 			var lists = List[List[String]]()
 			var listInit = List[String]()
 			 actionDsl(fileSpecification).foreach(col =>{
@@ -104,6 +109,7 @@ class Billing {
 	}
 	
 	def ConvertFile(lines:List[List[String]], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]] ,fileSpecification:String, extractor:Int):List[List[String]]={
+    		log.println
 			 var lists = setHeader(actionDsl,fileSpecification)
 			 var prevlist = List[String]()
 			 lines.foreach(line => {
@@ -115,6 +121,7 @@ class Billing {
 	}
 	
 	def popPatternKey(containingFolder:String, actionDsl:Map[String,List[List[String]]]):String={
+    	 log.println
 		 var pattkey = ""
 		 actionDsl("$pattern").foreach(line =>{
              if(containingFolder.trim().endsWith(line(1).replace("dir.eq(","").replace(")","").trim())){
@@ -127,6 +134,7 @@ class Billing {
 	}
 	
 	def popPreviousNumber(dslcount:Int, previousline:List[String]):String={
+      log.println 
 	  try{
 	    if(previousline(dslcount) == ""){  "2"}
 	    (previousline(dslcount).toInt +1).toString
@@ -136,6 +144,7 @@ class Billing {
 	}
 	
 	def setUsualValue(line:List[String], dsline:List[String]):String={
+    	log.println
 		 val idx = dsline(3).replace("#","").trim().toInt
 		 if(line.size > idx){
 			 return line(idx)
@@ -144,6 +153,7 @@ class Billing {
 	}
 	
 	def convertLine(line:List[String], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]], fileSpecification:String, previousline:List[String], extractor:Int):List[String]={
+    	log.println
 		 var list = List[String]()
 		 var dslSelected = actionDsl(fileSpecification).reverse
 		 
@@ -175,6 +185,7 @@ class Billing {
 	}
 	
 	def PopPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int):String={
+	   log.println
 	   try{
 		   pricedata(line(extractor))(0)(0)
 	   }catch{
@@ -183,6 +194,7 @@ class Billing {
 	}
 	
 	def popPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int, priceToggle:String):String={
+	       log.println
 		   try{
 			   pricedata(line(extractor))(0)(priceToggle.toInt)
 		   }catch{

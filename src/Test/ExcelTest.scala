@@ -17,19 +17,6 @@ class ExcelTest{
     
   val priceTableSample = targetDirectory+"xportal_price.xls"
   
-//    @Test def dateformatTest{
-//	  	import java.util.Date
-//	   	var book = new HSSFWorkbook()
-//	   	var sheet = book.createSheet()
-//	   	var row = sheet.createRow(1)
-//	   	//WriteDate(book, row, "2013/9/3 14:8:13", 1)
-//	   	var cell2 = row.createCell(2)
-//	   	cell2.setCellValue(new Date("2013/9/3 14:8:13"))
-//	  	var fileOut = new FileOutputStream("/Users/keitaroemotion/Documents/workbook.xls");
-//	    book.write(fileOut);
-//	    fileOut.close();
-//   }
-//  
    
   
     @Test def GetMaximumRowNumber{
@@ -43,7 +30,7 @@ class ExcelTest{
     
     
   
-	@Test def WriteDataToExcelTest(){
+  @Test def WriteDataToExcelTest(){
 	   new Billing().ExecuteFile(infile,actionDslFile)
 	} 
 	
