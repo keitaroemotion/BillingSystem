@@ -9,6 +9,69 @@ import org.apache.poi.hssf.usermodel.HSSFRow
 
 class Billing {
   
+	def ExecuteFile(infile:String, actionDslFile:String)={
+	  	import java.util.Date
+	   	var book = new HSSFWorkbook()
+	   	var sheet = book.createSheet()
+		var lines = new Billing().Analyze(infile,actionDslFile)
+		var colidx = 0
+		var row = sheet.createRow(0)
+		for(line <- lines.dsl.reverse){
+			println("====  "+line(1))
+			row.createCell(colidx).setCellValue(line(1))
+			colidx = colidx +1
+		}
+	  	
+		var rownum = 0	
+	  	
+		var out = new Output()
+		
+		for(line <- lines.convertedData){
+			if(rownum > 0){
+			    var row = sheet.createRow(rownum)
+				var colidx = 0
+				for(col <- line if out.notOutOfArray(lines,colidx) && rownum > 0){
+				   var ty = lines.dsl.reverse(colidx)(4) match{
+				   		case "$date"  =>  out.WriteDate(book, row, col, colidx)
+				   		case "$num" => out.WriteNum(row, colidx, col,book)
+				   		case "$num+sum" =>out.WriteNum(row, colidx, col,book)
+				   		case _ => row.createCell(colidx).setCellValue(col)
+				   }
+				  colidx = colidx + 1
+				}
+			}
+		    rownum = rownum + 1    
+		}
+	  	
+	  	
+	  	var maxnum = sheet.getPhysicalNumberOfRows()
+	  	
+	  	var col = 0
+	  	var cellStyle = book.createCellStyle()
+	    cellStyle.setDataFormat(book.getCreationHelper().createDataFormat().getFormat("#,##0"))
+	    row = sheet.createRow(maxnum)
+	  	
+	    
+	    
+	  	for(line <- lines.dslext(lines.idkey).reverse){
+	  		if(line(4).contains("sum")){
+	  		  println("..>> "+col+" : "+line(1)++" | "+maxnum)
+	  			out.WriteSum(book,sheet, col,maxnum,row,cellStyle)
+	  		}
+	  		col = col +1
+	  	}
+        out.CreateOutExcelFile(lines, book)
+  }	
+
+  
+  
+   def popPriceSheetNum(actionDsl:Map[String,List[List[String]]], pattkey:String):Int={
+		   try{
+			   actionDsl(pattkey+".pricesheet")(0)(1).split('.')(0).toInt
+		   }catch{
+		     case e:Exception => 100
+		   }
+   }
   
    def Analyze(infile:String, actionDslFile:String):DslUnit={
 		var actionDsl = new Excel().ReadExcel(new Excel().getSheet(actionDslFile,0),13,0)
@@ -17,7 +80,11 @@ class Billing {
 	    var priceTable = actionDsl(pattkey+".price")(0)(1)
 	    var keyIndex = actionDsl(pattkey+".keyindex")(0)(1).replace("#", "").toInt
 	    var extractor = actionDsl(pattkey+".extractor")(0)(1).replace("#", "").toInt
-		var pricedata = new Excel().ReadExcel(new Excel().getSheet(priceTable,0),13,keyIndex)
+	    
+	    println("keyindex | "+keyIndex)
+		var pricedata = new Excel().ReadExcel(new Excel().getSheet(priceTable,popPriceSheetNum(actionDsl,pattkey)),13,keyIndex)
+		
+		
 		var listifiedInfile =  new Dsl().ListifyInfile(infile)
 		var unit = new DslUnit()
 		unit.convertedData =  new Billing().ConvertFile(listifiedInfile, pricedata, actionDsl,pattkey,extractor)
@@ -88,11 +155,16 @@ class Billing {
 			 	}else if(dsline.size>4 && dsline(4).trim().endsWith("++")){
 			 		 value = popPreviousNumber(dslcount, previousline)
 			 	}else if(dsline(3).startsWith("$p(")){
-			 		var priceToggle = dsline(3).replace("$p(", "").replace(")","").trim()
-			 		if(priceToggle.contains('+')||priceToggle.contains('-')||priceToggle.contains('*')||priceToggle.contains('/')){
-				 		value = new Calc().caluculateUnit(priceToggle,pricedata(line(extractor))(0)).toString
+			 		if(PopPrice(pricedata, line, extractor) == "" ){
+			 				value = "-1"
 			 		}else{
-			 			value = pricedata(line(extractor))(0)(priceToggle.toInt)
+					 		var priceToggle = dsline(3).replace("$p(", "").replace(")","").trim()
+					 		if(priceToggle.contains('+')||priceToggle.contains('-')||priceToggle.contains('*')||priceToggle.contains('/')){
+						 		value = new Calc().caluculateUnit(priceToggle,pricedata(line(extractor))(0)).toString
+					 		}else{
+					 			//value = pricedata(line(extractor))(0)(priceToggle.toInt)
+					 		    value = popPrice(pricedata, line, extractor, priceToggle)
+					 		}
 			 		}
 			 	}else if(dsline.size>4 && dsline(2).trim() == ""&& dsline(4).trim() == "" && dsline(3) != ""  ){
 			 		 value = setUsualValue(line,dsline)
@@ -101,4 +173,23 @@ class Billing {
 		 }
 		 list.reverse
 	}
+	
+	def PopPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int):String={
+	   try{
+		   pricedata(line(extractor))(0)(0)
+	   }catch{
+	     case e:Exception => ""
+	   }
+	}
+	
+	def popPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int, priceToggle:String):String={
+		   try{
+			   pricedata(line(extractor))(0)(priceToggle.toInt)
+		   }catch{
+		     case e:Exception => 
+		       	"-1"
+		        // writelog
+		   }
+	}
+	
 }

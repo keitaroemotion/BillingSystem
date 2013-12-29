@@ -30,19 +30,7 @@ class ExcelTest{
 //	    fileOut.close();
 //   }
 //  
-   def WriteDate(book:HSSFWorkbook, row:HSSFRow, value:String, colnum:Int)={
-        try{
-		    import java.util.Date
-		   	var cellStyle = book.createCellStyle()
-		   	println("date| "+value)
-		   	cellStyle.setDataFormat(book.getCreationHelper().createDataFormat().getFormat("yyyy/mm/dd"));	   	
-		   	var cell = row.createCell(colnum)
-		   	cell.setCellValue(new Date(value))
-		    cell.setCellStyle(cellStyle)
-        }catch{
-          case e:Exception =>
-        }
-   }
+   
   
     @Test def GetMaximumRowNumber{
 //      	val priceTable = priceTableSample
@@ -53,87 +41,16 @@ class ExcelTest{
 //    	//print("row|"+row)
     }
     
-    def notOutOfArray(lines:DslUnit, colidx:Int):Boolean={
-      try{
-    	  lines.dsl(colidx)(4)
-    	  true
-      }catch{
-        case e:Exception => false
-      }
-    }
+    
   
 	@Test def WriteDataToExcelTest(){
-	  ExecuteFile(infile)
+	   new Billing().ExecuteFile(infile,actionDslFile)
 	} 
 	
-  def ExecuteFile(infile:String)={
-	  	import java.util.Date
-	   	var book = new HSSFWorkbook()
-	   	var sheet = book.createSheet()
-		var lines = new Billing().Analyze(infile,actionDslFile)
-		
-		
-		var colidx = 0
-		var row = sheet.createRow(0)
-		for(line <- lines.dsl.reverse){
-			println("====  "+line(1))
-			row.createCell(colidx).setCellValue(line(1))
-			colidx = colidx +1
-		}
-	  	
-		var rownum = 0	
-	  	
-		for(line <- lines.convertedData){
-			if(rownum > 0){
-			    var row = sheet.createRow(rownum)
-				var colidx = 0
-				for(col <- line if notOutOfArray(lines,colidx) && rownum > 0){
-				   var ty = lines.dsl.reverse(colidx)(4) match{
-				   		case "$date"  =>  WriteDate(book, row, col, colidx)
-				   		case "$num" => WriteNum(row, colidx, col,book)
-				   		case "$num+sum" =>WriteNum(row, colidx, col,book)
-				   		case _ => row.createCell(colidx).setCellValue(col)
-				   }
-				  colidx = colidx + 1
-				}
-			}
-		    rownum = rownum + 1    
-		}
-	  	
-	  	
-	  	var maxnum = sheet.getPhysicalNumberOfRows()
-	  	
-	  	var col = 0
-	  	var cellStyle = book.createCellStyle()
-	    cellStyle.setDataFormat(book.getCreationHelper().createDataFormat().getFormat("#,##0"))
-	    row = sheet.createRow(maxnum)
-	  	
-	  	for(line <- lines.dslext(lines.idkey).reverse){
-	  		if(line(4).contains("sum")){
-	  		  println("..>> "+col+" : "+line(1)++" | "+maxnum)
-	  			WriteSum(book,sheet, col,maxnum,row,cellStyle)
-	  		}
-	  		col = col +1
-	  	}
-	  	
-        CreateOutExcelFile(lines, book)
-  }	
-	
-   def CreateOutExcelFile(lines:DslUnit, book:HSSFWorkbook)={
-        var outdir = lines.dslext(lines.idkey + ".outdir")(0)(1)
-        if(!outdir.endsWith("/")) { outdir += "/"}
-	  	var fileOut = new FileOutputStream(outdir +"workbook.xls");
-	    book.write(fileOut);
-	    fileOut.close();
-   }		
-
+  	
    
-	def popAddRange(sheet:HSSFSheet, col:Int, excelmap:Map[String,List[List[String]]], maxNum:String):String={
-	  	var colAlphabet = excelmap("#"+(col).toString().trim())(0)(1).trim()
-		var s ="SUM("+colAlphabet+"1"+":"+colAlphabet+maxNum+")"
-		println("=> "+s)
-		s
-  	}
+   
+	
    
    
    @Test def PriceTotalTest(){
@@ -154,26 +71,7 @@ class ExcelTest{
    
    
    
-   def WriteSum(book:HSSFWorkbook, sheet:HSSFSheet, col:Int, maxNum:Int, row:HSSFRow, cellStyle:CellStyle){
-       var cell = row.createCell(col)
-		var mapexcel =new Excel().ReadExcel(3,0, "/Users/keitaroemotion/dev/garage/xbs/eref.xls", 0)
-		cell.setCellStyle(cellStyle)
-		cell.setCellFormula(popAddRange(sheet,col,mapexcel,(maxNum).toString).trim());
-   }
    
-   def WriteNum(row:HSSFRow, colidx:Int, col:String, book:HSSFWorkbook){
-     try{
-        import org.apache.poi.hssf.usermodel.HSSFDataFormat
-        var cellStyle = book.createCellStyle();
-        cellStyle.setDataFormat(book.getCreationHelper().createDataFormat().getFormat("#,##0"));
-	   	var cell = row.createCell(colidx)
-	   	cell.setCellValue(col.trim().split('.')(0).toShort)
-	    cell.setCellStyle(cellStyle)
-     }catch{
-       //case e:NumberFormatException => row.createCell(colidx).setCellValue(col) 
-       case ex:Exception => WriteNum(row, colidx, "0", book)
-     }
-   }
 	
 	val infile = targetDirectory+"ssinfile.txt"
 	  

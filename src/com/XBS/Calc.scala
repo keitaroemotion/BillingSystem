@@ -10,27 +10,32 @@ class Calc {
 	}
 
 	def caluculateUnit(text:String, dslfile:List[String]):Float={
-	  var addition = List[Float]()
-	  var subtraction = List[Float]()
-	  for(t <- text.split('+')){
-			if(!t.contains("-")){ addition = addition.+:(multiply(t,dslfile))}	
-			else{
-			  var i = 0
-			  for(s <- t.split('-')){
-				if(i == 0){
-				  addition = addition.+:(multiply(s,dslfile))
-				}else{
-				  subtraction = subtraction.+:(multiply(s,dslfile))
-				}  
-			    i = i+1
-			  }
+	  try{
+		  var addition = List[Float]()
+		  var subtraction = List[Float]()
+		  for(t <- text.split('+')){
+				if(!t.contains("-")){ addition = addition.+:(multiply(t,dslfile))}	
+				else{
+				  var i = 0
+				  for(s <- t.split('-')){
+					if(i == 0){
+					  addition = addition.+:(multiply(s,dslfile))
+					}else{
+					  subtraction = subtraction.+:(multiply(s,dslfile))
+					}  
+				    i = i+1
+				  }
+				}
 			}
-		}
-		
-		var tmp = 0f
-		for(elem <- addition){tmp += elem}
-		for(elem <- subtraction){ tmp -=  elem}
-		tmp
+			
+			var tmp = 0f
+			for(elem <- addition){tmp += elem}
+			for(elem <- subtraction){ tmp -=  elem}
+			tmp
+	  }catch{
+	    case e:Exception => -1f
+	    // writelog
+	  }
 	}
 	
 	def multiply(text:String, dslfile:List[String]):Float={
