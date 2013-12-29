@@ -13,7 +13,7 @@ class Dsl {
 			for(line <- Source.fromFile(new File(infile)).getLines){lines = lines.+:(line.split('\t').toList)}
 			lines
 	  }catch{
-	    		case e:Exception => throw e 
+	    		case e:Exception =>  log.println(e) ;throw e 
 	  }
 	}
 }

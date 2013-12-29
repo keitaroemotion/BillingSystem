@@ -17,46 +17,49 @@ class ExcelTest{
     
   val priceTableSample = targetDirectory+"xportal_price.xls"
   
-    @Test def GetMaximumRowNumber{
-//      	val priceTable = priceTableSample
-//    	var book = new HSSFWorkbook(new FileInputStream(new File(priceTable)))
-//    	var sheet = book.getSheetAt(0)
-//    	//var row = sheet.getFirstRowNum()
-//    	var row = sheet.getPhysicalNumberOfRows()
-//    	//print("row|"+row)
-    }
-
-    
+  def ReadActionDsl(file:String):Map[String,List[List[String]]]={
+	  var ex = new Excel	  
+	  ex.ReadExcel(ex.getSheet(actionDslFile,0),13,0)
+  }
   
-  @Test def WriteDataToExcelTest(){
-	   new Billing().ExecuteFile(infile,actionDslFile)
+  //var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
+  @Test def WriteDataToExcelTest{
+	   new Billing().ExecuteFile(infile,ReadActionDsl(actionDslFile))
 	} 
-	
-  	
-   
-   
-	
-   
-   
-   @Test def PriceTotalTest(){
-        var book = new HSSFWorkbook()
-	   	var sheet = book.createSheet()
+ 
+  
+   def GetFiles(infiledir:String):Array[java.io.File]={
+	   new java.io.File(infiledir).listFiles
+   }
+  
+  @Test def  DirectoryLevelExecutionTest{
+	   var actiondsl = ReadActionDsl(actionDslFile)
+	   //var datekey = "2013/12/"
+	   var datekey = ""
+	   var infiledir = actiondsl("infiledir")(0)(1)+datekey
+	   println("infiledir | "+infiledir)
+	   for(directory <-GetFiles(infiledir).filter(!_.getName.contains('.') ))
+		   for(file <- GetFiles(directory.getAbsolutePath).filter(_.getName.endsWith(".txt"))){
+		     	 new Billing().ExecuteFile(file.toPath.toString,actiondsl)
+			   	println("dirlevel | "+file.toString)
+		   }
+	} 
+ 
+  
+  
+   @Test def PriceTotalTest{
+        var book = new HSSFWorkbook
+	   	var sheet = book.createSheet
 	   	var cell = sheet.createRow(1).createCell(10);
         cell.setCellValue(102)
         var cell2 = sheet.createRow(2).createCell(10);
         cell2.setCellValue(100)
         var cell12 = sheet.createRow(3).createCell(10);
         cell12.setCellValue(100)
-		
 		var fileOut = new FileOutputStream("/Users/keitaroemotion/dev/garage/xbs/calctest.xls");
 	    book.write(fileOut);
-	    fileOut.close();
-		
+	    fileOut.close;
    }
-   
-   
-   
-   
 	
 	val infile = targetDirectory+"ssinfile.txt"
 	  

@@ -13,7 +13,7 @@ import org.apache.poi.ss.usermodel.CellStyle
 
 class Output {
 	def CreateOutExcelFile(lines:DslUnit, book:HSSFWorkbook)={
-        var outdir = lines.dslext(lines.idkey + ".outdir")(0)(1)
+        var outdir = lines.dslext("outdir")(0)(1)
         if(!outdir.endsWith("/")) { outdir += "/"}
 	  	var fileOut = new FileOutputStream(outdir +"workbook.xls");
 	    book.write(fileOut);
