@@ -11,7 +11,7 @@ class Billing {
     var log = new LoggerX
   
 	def ExecuteFile(infile:String, actionDslFile:String)={
-    	log.println
+    		log.println
 	  	import java.util.Date
 	   	var book = new HSSFWorkbook()
 	   	var sheet = book.createSheet()
@@ -24,7 +24,7 @@ class Billing {
 			colidx = colidx +1
 		}
 	  	
-		var rownum = 0	
+		var rownum = 1	
 	  	
 		var out = new Output()
 		
@@ -53,11 +53,8 @@ class Billing {
 	    cellStyle.setDataFormat(book.getCreationHelper().createDataFormat().getFormat("#,##0"))
 	    row = sheet.createRow(maxnum)
 	  	
-	    
-	    
 	  	for(line <- lines.dslext(lines.idkey).reverse){
 	  		if(line(4).contains("sum")){
-	  		  println("..>> "+col+" : "+line(1)++" | "+maxnum)
 	  			out.WriteSum(book,sheet, col,maxnum,row,cellStyle)
 	  		}
 	  		col = col +1
@@ -76,18 +73,32 @@ class Billing {
 		   }
    }
   
+   def popDsl(actionDsl:Map[String,List[List[String]]],pattkey:String, appension:String):String={
+    		   log.println
+    		   try{
+    			   actionDsl(pattkey+appension)(0)(1)
+    		   }catch{
+    		     case e:Exception =>  log.println(e) ;  throw e
+    		   }
+   }
+   
+   def popNumber(text:String):Int={
+    			text.replace("#", "").toInt
+   }
+   
+   
+   
    def Analyze(infile:String, actionDslFile:String):DslUnit={
-    	log.println
-		var actionDsl = new Excel().ReadExcel(new Excel().getSheet(actionDslFile,0),13,0)
+    		log.println
+    		
+    		var excel = new Excel()
+		var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
 	    var containingFolder = new File(infile).getParent()
-	    val pattkey = new Billing().popPatternKey(containingFolder, actionDsl)
-	    var priceTable = actionDsl(pattkey+".price")(0)(1)
-	    var keyIndex = actionDsl(pattkey+".keyindex")(0)(1).replace("#", "").toInt
-	    var extractor = actionDsl(pattkey+".extractor")(0)(1).replace("#", "").toInt
-	    
-	    println("keyindex | "+keyIndex)
-		var pricedata = new Excel().ReadExcel(new Excel().getSheet(priceTable,popPriceSheetNum(actionDsl,pattkey)),13,keyIndex)
-		
+	    val pattkey = popPatternKey(containingFolder, actionDsl)
+	    var priceTable = popDsl(actionDsl,pattkey,".price")
+	    var keyIndex = popNumber(popDsl(actionDsl,pattkey,".keyindex"))
+	    var extractor  = popNumber(popDsl(actionDsl,pattkey,".extractor"))
+		var pricedata = excel.ReadExcel(excel.getSheet(priceTable,popPriceSheetNum(actionDsl,pattkey)),13,keyIndex)
 		
 		var listifiedInfile =  new Dsl().ListifyInfile(infile)
 		var unit = new DslUnit()
@@ -98,19 +109,10 @@ class Billing {
 		unit
 	}
   
-	def setHeader(actionDsl:Map[String,List[List[String]]], fileSpecification:String):List[List[String]]={
-    		log.println
-			var lists = List[List[String]]()
-			var listInit = List[String]()
-			 actionDsl(fileSpecification).foreach(col =>{
-				 listInit = listInit.+:(col(1))
-			 })
-			 lists.+:(listInit)
-	}
 	
 	def ConvertFile(lines:List[List[String]], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]] ,fileSpecification:String, extractor:Int):List[List[String]]={
-    		log.println
-			 var lists = setHeader(actionDsl,fileSpecification)
+    			log.println
+    			 var lists = List[List[String]]()
 			 var prevlist = List[String]()
 			 lines.foreach(line => {
 				   var lineConverted = convertLine(line,pricedata,actionDsl,fileSpecification, prevlist, extractor)
@@ -121,16 +123,16 @@ class Billing {
 	}
 	
 	def popPatternKey(containingFolder:String, actionDsl:Map[String,List[List[String]]]):String={
-    	 log.println
+    	 	log.println
 		 var pattkey = ""
 		 actionDsl("$pattern").foreach(line =>{
-             if(containingFolder.trim().endsWith(line(1).replace("dir.eq(","").replace(")","").trim())){
-               	pattkey = line(2)   
-             }
+	             if(containingFolder.trim().endsWith(line(1).replace("dir.eq(","").replace(")","").trim())){
+	               	pattkey = line(2)   
+	             }
 	   	 }
 		 )
-		if(pattkey == ""){ throw new Exception("patternkey is not detected:"+containingFolder)}
-		pattkey
+			if(pattkey == ""){ throw new Exception("patternkey is not detected:"+containingFolder)}
+			pattkey
 	}
 	
 	def popPreviousNumber(dslcount:Int, previousline:List[String]):String={
@@ -152,30 +154,23 @@ class Billing {
 		 ""
 	}
 	
+	val priceCommand = "$p("
+	val dateCommand =    "$date"
+	
 	def convertLine(line:List[String], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]], fileSpecification:String, previousline:List[String], extractor:Int):List[String]={
-    	log.println
+    		log.println
 		 var list = List[String]()
 		 var dslSelected = actionDsl(fileSpecification).reverse
 		 
 		 for(dslcount <- 0 to dslSelected.size-1){
 			    var value = ""	
 			 	var dsline = dslSelected(dslcount)
-			 	if(dsline.size>4 && dsline(4).trim() == "$date"){
+			 	if(dsline.size>4 && dsline(4).trim() == dateCommand ){
 			 		  value = setUsualValue(line,dsline) 
 			 	}else if(dsline.size>4 && dsline(4).trim().endsWith("++")){
 			 		 value = popPreviousNumber(dslcount, previousline)
-			 	}else if(dsline(3).startsWith("$p(")){
-			 		if(PopPrice(pricedata, line, extractor) == "" ){
-			 				value = "-1"
-			 		}else{
-					 		var priceToggle = dsline(3).replace("$p(", "").replace(")","").trim()
-					 		if(priceToggle.contains('+')||priceToggle.contains('-')||priceToggle.contains('*')||priceToggle.contains('/')){
-						 		value = new Calc().caluculateUnit(priceToggle,pricedata(line(extractor))(0)).toString
-					 		}else{
-					 			//value = pricedata(line(extractor))(0)(priceToggle.toInt)
-					 		    value = popPrice(pricedata, line, extractor, priceToggle)
-					 		}
-			 		}
+			 	}else if(dsline(3).startsWith(priceCommand )){
+			 		value = GetPrice(value, pricedata, line,extractor, dsline)
 			 	}else if(dsline.size>4 && dsline(2).trim() == ""&& dsline(4).trim() == "" && dsline(3) != ""  ){
 			 		 value = setUsualValue(line,dsline)
 			 	}
@@ -184,23 +179,41 @@ class Billing {
 		 list.reverse
 	}
 	
-	def PopPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int):String={
-	   log.println
-	   try{
-		   pricedata(line(extractor))(0)(0)
-	   }catch{
-	     case e:Exception => ""
-	   }
+	
+	def GetPrice(valueString:String, pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int, dsline:List[String]):String={
+    			var value = valueString
+    			
+    			if(PopPrice(pricedata, line, extractor) == "" ){
+			 		    value = "-1"
+	 		}else{
+			 		var priceToggle = dsline(3).replace(priceCommand , "").replace(")","").trim()
+			 		if(priceToggle.contains('+')||priceToggle.contains('-')||priceToggle.contains('*')||priceToggle.contains('/')){
+			 			println("|-> "+value+" | "+priceToggle)
+				 		value = new Calc().caluculateUnit(priceToggle,pricedata(line(extractor))(0)).toString
+				 		println("|-> "+value+" | ")
+			 		}else{
+			 			value = popPrice(pricedata, line, extractor, priceToggle)
+			 		}
+	 		}
+			value
 	}
+	
+	def PopPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int):String={
+	    			   log.println
+				   try{
+					   		pricedata(line(extractor))(0)(0)
+				   }catch{
+				     		case e:Exception => ""
+				   }
+	}
+	
 	
 	def popPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int, priceToggle:String):String={
 	       log.println
 		   try{
-			   pricedata(line(extractor))(0)(priceToggle.toInt)
+			  pricedata(line(extractor))(0)(priceToggle.toInt)
 		   }catch{
-		     case e:Exception => 
-		       	"-1"
-		        // writelog
+		     case e:Exception => log.println(e); "-1"
 		   }
 	}
 	

@@ -8,10 +8,19 @@ class LoggerX {
     var pathdef = "/Users/keitaroemotion/dev/"
       
     def println{
-    	print("\n")
-    }  
+    		print("\n")
+    }
+    
+    def println(e:Exception, text:String){
+    		print(e.getMessage()+"|"+text+ "\n")
+    }
+    
+    def println(e:Exception){
+    		print(e.getMessage()+ "\n")
+    }
+    
     def println(str:String){
-    	print(str+"\n")
+    		print(str+"\n")
     }
       
     def GetMethodName:String={

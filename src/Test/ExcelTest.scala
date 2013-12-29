@@ -17,8 +17,6 @@ class ExcelTest{
     
   val priceTableSample = targetDirectory+"xportal_price.xls"
   
-   
-  
     @Test def GetMaximumRowNumber{
 //      	val priceTable = priceTableSample
 //    	var book = new HSSFWorkbook(new FileInputStream(new File(priceTable)))
@@ -27,7 +25,7 @@ class ExcelTest{
 //    	var row = sheet.getPhysicalNumberOfRows()
 //    	//print("row|"+row)
     }
-    
+
     
   
   @Test def WriteDataToExcelTest(){
