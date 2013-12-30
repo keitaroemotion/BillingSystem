@@ -11,12 +11,38 @@ class LoggerX {
     		print("\n")
     }
     
+    def pln{
+    		print("\n")
+    }
+    def pln(text:String){
+    		print(text+"\n")
+    }
+    
+    def pln(text:Int){
+    		print(text+"\n")
+    }
+    
+    def err(e:Exception):Exception={
+    		print(e.getMessage().toString+ "\n")
+    		e
+    }
+    
+    def err(msg:String):Exception={
+    		print(msg.toString+ "\n")
+    		new Exception(msg)
+    }
+    
+    def err(e:Exception, text:String):Exception = {
+    		print(e.getMessage.toString+"|"+text+ "\n")
+    		e
+    }
+    
     def println(e:Exception, text:String){
-    		print(e.getMessage()+"|"+text+ "\n")
+    		print(e.getMessage.toString+"|"+text+ "\n")
     }
     
     def println(e:Exception){
-    		print(e.getMessage()+ "\n")
+    		print(e.getMessage.toString+ "\n")
     }
     
     def println(str:String){
@@ -31,11 +57,11 @@ class LoggerX {
 	}
     
     
-	def print(str:String){
+	private def print(str:String){
 	    val mn = GetMethodName(4).replace('.', '|')
 		val fw = new BufferedWriter( new FileWriter(pathdef+ popDateShort+ ".log", true))
 	    try {
-	      fw.append(mn+"|"+str)
+	      fw.append(popDateLong.toString+"|" + mn+"|"+str+"\n")
 	    } finally {
 	      fw.close()
 	    }

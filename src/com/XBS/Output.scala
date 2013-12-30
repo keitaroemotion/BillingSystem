@@ -36,10 +36,10 @@ class Output {
 	
 	def notOutOfArray(lines:DslUnit, colidx:Int):Boolean={
       try{
-    	  lines.dsl(colidx)(4)
-    	  true
+	    	  lines.dsl(colidx)(4)
+	    	  true
       }catch{
-        case e:Exception => false
+          case e:Exception => false
       }
     }
 	

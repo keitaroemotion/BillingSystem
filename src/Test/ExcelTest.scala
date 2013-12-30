@@ -22,30 +22,23 @@ class ExcelTest{
 	  ex.ReadExcel(ex.getSheet(actionDslFile,0),13,0)
   }
   
-  //var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
   @Test def WriteDataToExcelTest{
 	   new Billing().ExecuteFile(infile,ReadActionDsl(actionDslFile))
 	} 
- 
   
-   def GetFiles(infiledir:String):Array[java.io.File]={
-	   new java.io.File(infiledir).listFiles
-   }
-  
+
   @Test def  DirectoryLevelExecutionTest{
 	   var actiondsl = ReadActionDsl(actionDslFile)
-	   //var datekey = "2013/12/"
 	   var datekey = ""
 	   var infiledir = actiondsl("infiledir")(0)(1)+datekey
 	   println("infiledir | "+infiledir)
-	   for(directory <-GetFiles(infiledir).filter(!_.getName.contains('.') ))
-		   for(file <- GetFiles(directory.getAbsolutePath).filter(_.getName.endsWith(".txt"))){
-		     	 new Billing().ExecuteFile(file.toPath.toString,actiondsl)
+	   var iox = new IOX()
+	   for(directory <- iox.GetFiles(infiledir).filter(!_.getName.contains('.') ))
+		   for(file <- iox.GetFiles(directory.getAbsolutePath).filter(_.getName.endsWith(".txt"))){		
+		        new Billing().ExecuteFile(file.toPath.toString,actiondsl)
 			   	println("dirlevel | "+file.toString)
 		   }
 	} 
- 
-  
   
    @Test def PriceTotalTest{
         var book = new HSSFWorkbook
