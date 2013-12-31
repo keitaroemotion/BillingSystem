@@ -47,7 +47,6 @@ class Excel {
 					  lists = lists.+:(list)
 					  
 					  var key = list(keyIndex)
-					  
 					  if(map.contains(key)){
 						   var tmpvalue = map(key)
 						   map.remove(key)
@@ -55,7 +54,6 @@ class Excel {
 					  }
 					  if(key != ""){ map = map.+(key -> lists)}
 			      }
-				  log.pln("map.size|"+map.size)
 				  return map
 		   }catch{
 		     	case e:Exception => throw log.err(e)

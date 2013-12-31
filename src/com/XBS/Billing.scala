@@ -12,7 +12,7 @@ import com.sun.org.apache.xalan.internal.xsltc.compiler.Output
 class Billing {
     var log = new LoggerX
   
-	def ExecuteFile(infile:String, actionDslFile:Map[String,List[List[String]]])={
+	def ExecuteFile(infile:String, actionDslFile:Map[String,List[List[String]]], eunit:ExtraDatabaseUnit)={
     		log.println
     		try{
 	    		  import java.util.Date
@@ -82,10 +82,11 @@ class Billing {
    //var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
    def Analyze(infile:String, actionDsl:Map[String,List[List[String]]]):DslUnit={
 	    		log.println
-	    		
 	    		var excel = new Excel()
+	    		//ここの部分がもっと上の階層にあって、;pattkey　がひきすうになるべし
 		    var containingFolder = new File(infile).getParent()
 		    val pattkey = popPatternKey(containingFolder, actionDsl)
+		    //
 		    var priceTable = popDsl(actionDsl,pattkey,".price")
 		    var keyIndex = popNumber(popDsl(actionDsl,pattkey,".keyindex"))
 		    var extractor  = popNumber(popDsl(actionDsl,pattkey,".extractor"))
@@ -100,7 +101,31 @@ class Billing {
 			unit
 	}
   
+	   import com.XBS._
+	   def PopXtraDatabaseUnit(dslFilePath:String, key:String):ExtraDatabaseUnit={
+		   	var ex = new Excel()
+	        var dictionary = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)
+	       	var indsl = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)(key+".db")(0)
+	       	var htmlfolder = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)("$htmldirloc")(0)(1)
+		    new ExtraDatabaseUnit().Construct(new HtmlUnit().FormatObject(indsl,DatabasifyHtmlsInFolder(htmlfolder)))
+		    //    > (1,2,3)
+	   }
+
+
+	private def DatabasifyHtmlsInFolder(directory:String): List[List[String]]= {
+		  log.pln
+	      import java.io._
+		  import com.XBS._
+		  var iox = new IOX()
+	      var list = List[List[String]]()
+	      var hunit = new HtmlUnit()
+		  for( file <- iox.GetFiles(directory).filter( _.getName.endsWith(".html") ))
+			   	list = list.:::(hunit.ParseHtml(file.toString))
+	      list
+	}
 	
+	
+   
 	def ConvertFile(lines:List[List[String]], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]] ,fileSpecification:String, extractor:Int):List[List[String]]={
     			log.println
     			 var lists = List[List[String]]()
@@ -210,9 +235,8 @@ class Billing {
 	}
   
 	
-  private def WriteAllSum(book: HSSFWorkbook, sheet: HSSFSheet, lines: DslUnit, out: Output)= {
+  private def WriteAllSum(book: HSSFWorkbook, sheet: HSSFSheet, lines: DslUnit, out: com.XBS.Output)= {
     	  log.println
-    	  //var _row = row	
       var maxnum = sheet.getPhysicalNumberOfRows()
       var col = 0
       var cellStyle = book.createCellStyle()

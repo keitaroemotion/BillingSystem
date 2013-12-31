@@ -22,9 +22,12 @@ class ExcelTest{
 	  ex.ReadExcel(ex.getSheet(actionDslFile,0),13,0)
   }
   
+  
+  
   @Test def WriteDataToExcelTest{
-	   new Billing().ExecuteFile(infile,ReadActionDsl(actionDslFile))
-	} 
+       var extraData = new Billing().PopXtraDatabaseUnit(actionDslFile, "$ss")
+	   new Billing().ExecuteFile(infile,ReadActionDsl(actionDslFile),extraData)
+  } 
   
 
   @Test def  DirectoryLevelExecutionTest{
@@ -33,9 +36,10 @@ class ExcelTest{
 	   var infiledir = actiondsl("infiledir")(0)(1)+datekey
 	   println("infiledir | "+infiledir)
 	   var iox = new IOX()
+	   var extraData = new Billing().PopXtraDatabaseUnit(actionDslFile, "$ss")
 	   for(directory <- iox.GetFiles(infiledir).filter(!_.getName.contains('.') ))
 		   for(file <- iox.GetFiles(directory.getAbsolutePath).filter(_.getName.endsWith(".txt"))){		
-		        new Billing().ExecuteFile(file.toPath.toString,actiondsl)
+		        new Billing().ExecuteFile(file.toPath.toString,actiondsl,extraData)
 			   	println("dirlevel | "+file.toString)
 		   }
 	} 
