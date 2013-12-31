@@ -22,24 +22,32 @@ class ExcelTest{
 	  ex.ReadExcel(ex.getSheet(actionDslFile,0),13,0)
   }
   
-  
-  
   @Test def WriteDataToExcelTest{
-       var extraData = new Billing().PopXtraDatabaseUnit(actionDslFile, "$ss")
-	   new Billing().ExecuteFile(infile,ReadActionDsl(actionDslFile),extraData)
+   	   var actionDsl = ReadActionDsl(actionDslFile)
+   	   var bill = new Billing
+   	   val pattkey = bill.popPatternKey(bill.popContainingFolder(infile), actionDsl )
+       var extraData = bill.PopXtraDatabaseUnit(actionDslFile, "$ss")
+	   bill.ExecuteFile(infile,actionDsl,extraData,pattkey)
   } 
   
+  
+  //var actionDsl = ReadActionDsl(actionDslFile)
+//   	   var bill = new Billing
+//   	   val pattkey = bill.popPatternKey(bill.popContainingFolder(infile), actionDsl )
+//       var extraData = bill.PopXtraDatabaseUnit(actionDslFile, "$ss")
+//	   bill.ExecuteFile(infile,actionDsl,extraData,pattkey)
 
   @Test def  DirectoryLevelExecutionTest{
+    	   var bill = new Billing
 	   var actiondsl = ReadActionDsl(actionDslFile)
+	   val pattkey = bill.popPatternKey(bill.popContainingFolder(infile), actiondsl)
 	   var datekey = ""
 	   var infiledir = actiondsl("infiledir")(0)(1)+datekey
-	   println("infiledir | "+infiledir)
 	   var iox = new IOX()
-	   var extraData = new Billing().PopXtraDatabaseUnit(actionDslFile, "$ss")
+	   var extraData = bill.PopXtraDatabaseUnit(actionDslFile, pattkey)
 	   for(directory <- iox.GetFiles(infiledir).filter(!_.getName.contains('.') ))
 		   for(file <- iox.GetFiles(directory.getAbsolutePath).filter(_.getName.endsWith(".txt"))){		
-		        new Billing().ExecuteFile(file.toPath.toString,actiondsl,extraData)
+		        bill.ExecuteFile(file.toPath.toString,actiondsl,extraData,pattkey)
 			   	println("dirlevel | "+file.toString)
 		   }
 	} 

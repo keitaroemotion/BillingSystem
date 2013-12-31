@@ -6,19 +6,18 @@ import java.io._
 import scala.collection.mutable.Map
 import org.apache.poi.hssf.usermodel.HSSFRow
 import org.apache.poi.hssf.usermodel.HSSFSheet
-import com.sun.org.apache.xalan.internal.xsltc.compiler.Output
 
 
 class Billing {
     var log = new LoggerX
   
-	def ExecuteFile(infile:String, actionDslFile:Map[String,List[List[String]]], eunit:ExtraDatabaseUnit)={
+	def ExecuteFile(infile:String, actionDslFile:Map[String,List[List[String]]], eunit:ExtraDatabaseUnit, pattkey:String)={
     		log.println
     		try{
-	    		  import java.util.Date
+	    		    import java.util.Date
 			   	var book = new HSSFWorkbook()
 			   	var sheet = book.createSheet()
-				var lines = new Billing().Analyze(infile,actionDslFile)
+				var lines = new Billing().Analyze(infile,actionDslFile, pattkey,eunit )
 				WriteHeader(lines, sheet)
 				var out = new Output()
 				WriteBodyAccordingAsDataType(lines, sheet,out, book)
@@ -77,40 +76,42 @@ class Billing {
    def popNumber(text:String):Int={
     			text.replace("#", "").toInt
    }
+
    
+   def popContainingFolder(infile:String):String={
+    		new File(infile).getParent()
+   }
    
    //var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
-   def Analyze(infile:String, actionDsl:Map[String,List[List[String]]]):DslUnit={
+   def Analyze(infile:String, actionDsl:Map[String,List[List[String]]], pattkey:String, eunit:ExtraDatabaseUnit):DslUnit={
 	    		log.println
 	    		var excel = new Excel()
-	    		//ここの部分がもっと上の階層にあって、;pattkey　がひきすうになるべし
-		    var containingFolder = new File(infile).getParent()
-		    val pattkey = popPatternKey(containingFolder, actionDsl)
-		    //
 		    var priceTable = popDsl(actionDsl,pattkey,".price")
 		    var keyIndex = popNumber(popDsl(actionDsl,pattkey,".keyindex"))
 		    var extractor  = popNumber(popDsl(actionDsl,pattkey,".extractor"))
 			var pricedata = excel.ReadExcel(excel.getSheet(priceTable,popPriceSheetNum(actionDsl,pattkey)),13,keyIndex)
-			
 			var listifiedInfile =  new Dsl().ListifyInfile(infile)
 			var unit = new DslUnit()
-			unit.convertedData =  new Billing().ConvertFile(listifiedInfile, pricedata, actionDsl,pattkey,extractor)
+			unit.convertedData =  new Billing().ConvertFile(listifiedInfile, pricedata, actionDsl,pattkey,extractor,eunit)
 			unit.dsl = actionDsl(pattkey)
 			unit.dslext = actionDsl
 			unit.idkey = pattkey
 			unit
 	}
   
+   
 	   import com.XBS._
 	   def PopXtraDatabaseUnit(dslFilePath:String, key:String):ExtraDatabaseUnit={
-		   	var ex = new Excel()
-	        var dictionary = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)
-	       	var indsl = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)(key+".db")(0)
-	       	var htmlfolder = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)("$htmldirloc")(0)(1)
-		    new ExtraDatabaseUnit().Construct(new HtmlUnit().FormatObject(indsl,DatabasifyHtmlsInFolder(htmlfolder)))
-		    //    > (1,2,3)
+	     	try{
+				   	var ex = new Excel()
+			        var dictionary = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)
+			       	var indsl = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)(key+".db")(0)
+			       	var htmlfolder = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)("$htmldirloc")(0)(1)
+				    new ExtraDatabaseUnit().Construct(new HtmlUnit().FormatObject(indsl,DatabasifyHtmlsInFolder(htmlfolder)))
+	     	}catch{
+	     			case e:Exception => throw log.err(e)
+	     	}
 	   }
-
 
 	private def DatabasifyHtmlsInFolder(directory:String): List[List[String]]= {
 		  log.pln
@@ -124,17 +125,15 @@ class Billing {
 	      list
 	}
 	
-	
-   
-	def ConvertFile(lines:List[List[String]], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]] ,fileSpecification:String, extractor:Int):List[List[String]]={
+	def ConvertFile(lines:List[List[String]], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]] ,fileSpecification:String, extractor:Int, eunit:ExtraDatabaseUnit):List[List[String]]={
     			log.println
     			 var lists = List[List[String]]()
 			 var prevlist = List[String]()
-			 lines.foreach(line => {
-				   var lineConverted = convertLine(line,pricedata,actionDsl,fileSpecification, prevlist, extractor)
+			 for(line <- lines){
+				   var lineConverted = convertLine(line,pricedata,actionDsl,fileSpecification, prevlist, extractor,eunit)
 				   lists = lists.+:(lineConverted)
 				   prevlist = lineConverted
-			 })
+			 }
 			 lists.reverse
 	}
 	
@@ -152,13 +151,13 @@ class Billing {
 	}
 	
 	def popPreviousNumber(dslcount:Int, previousline:List[String]):String={
-      log.println 
-	  try{
-	    if(previousline(dslcount) == ""){  "2"}
-	    (previousline(dslcount).toInt +1).toString
-	  }catch{
-	    case e:Exception => "1"  
-	  }
+	      log.println 
+		  try{
+			    if(previousline(dslcount) == ""){  "2"}
+			    (previousline(dslcount).toInt +1).toString
+		  }catch{
+		  		case e:Exception => "1"  
+		  }
 	}
 	
 	def setUsualValue(line:List[String], dsline:List[String]):String={
@@ -170,10 +169,37 @@ class Billing {
 		 ""
 	}
 	
-	val priceCommand = "$p("
-	val dateCommand =    "$date"
-	
-	def convertLine(line:List[String], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]], fileSpecification:String, previousline:List[String], extractor:Int):List[String]={
+  	 val priceCommand = "$p("
+	 val dateCommand =    "$date"
+     def SelectFromPriceTable(eunit:ExtraDatabaseUnit, pricekey:String, orderNumKey:String, exvalue:String, comms:List[String]):String={
+  	   			println("pk| "+pricekey)
+  	   			var value = exvalue
+  	   			var htmlKey = eunit.Html(orderNumKey)
+			    var pline = eunit.PriceTable(pricekey)(0)
+    				var c = 0
+    				for(h <- htmlKey){
+    						if(h.htmlIndex == pline(h.priceFileIndex)){c = c + 1}
+    				}
+    				if(c == htmlKey.size){
+    						value = pline(comms(2).replace(">(", "").toInt)
+    				}
+    				value
+	}
+	  
+  	 def popValueFromExtraPriceMaster(indexColumn:String,line:List[String],eunit:ExtraDatabaseUnit, xval:String):String={
+  	   				  println("indexColumn | "+indexColumn)
+  	   			      var value = xval
+                      var comms = indexColumn.split("|")(1).replace("if(line(", "").split(')').toList
+                    	  var orderNumKey = line(comms(0).toInt)
+                    	  println("orderNumKey  | "+orderNumKey )
+                      if (orderNumKey.startsWith(comms(1).replace("*",""))){
+                    	  	    for(pricekey <- eunit.PriceTable.keys)
+                    	  	    			value = SelectFromPriceTable(eunit, pricekey, orderNumKey, value, comms) 
+                      }
+  	   				  value
+  	 }
+  	 
+	def convertLine(line:List[String], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]], fileSpecification:String, previousline:List[String], extractor:Int,eunit:ExtraDatabaseUnit):List[String]={
     		log.println
 		 var list = List[String]()
 		 var dslSelected = actionDsl(fileSpecification).reverse
@@ -181,13 +207,19 @@ class Billing {
 		 for(dslcount <- 0 to dslSelected.size-1){
 			    var value = ""	
 			 	var dsline = dslSelected(dslcount)
-			 	if(dsline.size>4 && dsline(4).trim() == dateCommand ){
+			 	var formatColumn = dsline(2).trim
+			 	var indexColumn = dsline(3).trim
+			 	var attribueColumn = dsline(4) .trim
+			 	
+			 	if(indexColumn.contains("|if(line")){
+			 	    value = popValueFromExtraPriceMaster(indexColumn,line,eunit, value)
+ 			 	}else if(dsline.size>4 && attribueColumn == dateCommand ){
 			 		  value = setUsualValue(line,dsline) 
-			 	}else if(dsline.size>4 && dsline(4).trim().endsWith("++")){
+			 	}else if(dsline.size>4 && attribueColumn.endsWith("++")){
 			 		 value = popPreviousNumber(dslcount, previousline)
-			 	}else if(dsline(3).startsWith(priceCommand )){
-			 		value = GetPrice(value, pricedata, line,extractor, dsline)
-			 	}else if(dsline.size>4 && dsline(2).trim() == ""&& dsline(4).trim() == "" && dsline(3) != ""  ){
+			 	}else if(indexColumn.startsWith(priceCommand)){
+			 		 value = GetPrice(value, pricedata, line,extractor, dsline)
+			 	}else if(dsline.size>4 && formatColumn == ""&& attribueColumn == "" && indexColumn != ""  ){
 			 		 value = setUsualValue(line,dsline)
 			 	}
 			    list = list.+:(value)
@@ -205,9 +237,7 @@ class Billing {
 	 		}else{
 			 		var priceToggle = dsline(3).replace(priceCommand , "").replace(")","").trim()
 			 		if(priceToggle.contains('+')||priceToggle.contains('-')||priceToggle.contains('*')||priceToggle.contains('/')){
-			 			println("|-> "+value+" | "+priceToggle)
 				 		value = new Calc().caluculateUnit(priceToggle,pricedata(line(extractor))(0)).toString
-				 		println("|-> "+value+" | ")
 			 		}else{
 			 			value = popPrice(pricedata, line, extractor, priceToggle)
 			 		}
