@@ -4,7 +4,7 @@ import java.io._
 import scala.io.Source
 
 class Dsl {
-    val log = new LoggerX
+    var log = new com.Kei.LogX
   
 	def ListifyInfile(infile:String):List[List[String]]={
 	  try{

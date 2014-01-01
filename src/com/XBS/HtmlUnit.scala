@@ -8,7 +8,7 @@ class HtmlUnit {
      var infileIndex = 0
      var RefTableLocation = Map[String,List[List[String]]]()
      var HtmlReferencePointers = Map[String,List[HtmlLocation]]()
-     var log = new LoggerX
+     var log = new com.Kei.LogX
      val sheetCommand = "/sheet"
      var priceFileCommand = "/pricefile"
        

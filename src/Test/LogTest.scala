@@ -10,7 +10,7 @@ class LogTest {
 		log.println("moominmamalog")
 	}
 	
-	var log = new LoggerX()
+	var log = new com.Kei.LogX
 	
 	@Test def MethodTracingTest{
 		println("trace |"+log.GetMethodName)

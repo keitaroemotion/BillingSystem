@@ -12,7 +12,7 @@ import oracle.jrockit.jfr.Logger
 
 
 class Excel {
-   var log = new LoggerX
+   var log = new com.Kei.LogX
   
 	def getSheet(file:String, sheetnum:Int):HSSFSheet={
      log.pln("file| "+file + " |sheetnum|"+sheetnum)

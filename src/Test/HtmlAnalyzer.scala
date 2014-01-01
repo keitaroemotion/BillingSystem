@@ -3,7 +3,6 @@ package Test
 import org.junit._
 import scala.collection._
 import com.XBS.HtmlUnit
-import com.XBS.LoggerX
 
 class HtmlAnalyzer {
    @Test def PopLastTagIndex()={
@@ -12,7 +11,7 @@ class HtmlAnalyzer {
 	   //println("$ "+ new Billing().extractValue(s))
    }
    
-   var log = new LoggerX
+   var log = new com.Kei.LogX
 	@Test def HtmlParsingTest(){
         import com.XBS._
         val dslFilePath = "/Users/keitaroemotion/dev/garage/xbs/xbsdsl.xls"

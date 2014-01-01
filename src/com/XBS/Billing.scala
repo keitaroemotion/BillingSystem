@@ -6,10 +6,10 @@ import java.io._
 import scala.collection.mutable.Map
 import org.apache.poi.hssf.usermodel.HSSFRow
 import org.apache.poi.hssf.usermodel.HSSFSheet
-
+import com.Kei.LogX
 
 class Billing {
-    var log = new LoggerX
+    var log = new LogX
   
 	def ExecuteFile(infile:String, actionDslFile:Map[String,List[List[String]]], eunit:ExtraDatabaseUnit, pattkey:String)={
     		log.println

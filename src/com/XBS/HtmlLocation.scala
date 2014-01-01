@@ -1,7 +1,7 @@
 package com.XBS
 
 class HtmlLocation {
-           var log = new LoggerX
+           var log = new com.Kei.LogX
     	 		var htmlIndex:String = ""
     	 		var priceFileIndex:Int = 0
     	 		def FormatObject(t:String, html:List[String]) : HtmlLocation={
