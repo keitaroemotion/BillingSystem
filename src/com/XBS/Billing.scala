@@ -85,7 +85,7 @@ class Billing {
    //var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
    def Analyze(infile:String, actionDsl:Map[String,List[List[String]]], pattkey:String, eunit:ExtraDatabaseUnit):DslUnit={
 	    		log.println
-	    		var excel = new Excel()
+	    		var excel = new com.Kei.Excel()
 		    var priceTable = popDsl(actionDsl,pattkey,".price")
 		    var keyIndex = popNumber(popDsl(actionDsl,pattkey,".keyindex"))
 		    var extractor  = popNumber(popDsl(actionDsl,pattkey,".extractor"))
@@ -103,7 +103,7 @@ class Billing {
 	   import com.XBS._
 	   def PopXtraDatabaseUnit(dslFilePath:String, key:String):ExtraDatabaseUnit={
 	     	try{
-				   	var ex = new Excel()
+				   	var ex = new com.Kei.Excel()
 			        var dictionary = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)
 			       	var indsl = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)(key+".db")(0)
 			       	var htmlfolder = ex.ReadExcel(ex.getSheet(dslFilePath,0),13,0)("$htmldirloc")(0)(1)

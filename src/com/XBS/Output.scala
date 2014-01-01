@@ -50,7 +50,7 @@ class Output {
 	
 	def WriteSum(book:HSSFWorkbook, sheet:HSSFSheet, col:Int, maxNum:Int, row:HSSFRow, cellStyle:CellStyle){
        var cell = row.createCell(col)
-		var mapexcel =new Excel().ReadExcel(3,0, "/Users/keitaroemotion/dev/garage/xbs/eref.xls", 0)
+		var mapexcel =new com.Kei.Excel().ReadDomainSpecificFile(3,0, "/Users/keitaroemotion/dev/garage/xbs/eref.xls", 0)
 		cell.setCellStyle(cellStyle)
 		cell.setCellFormula(popAddRange(sheet,col,mapexcel,(maxNum).toString).trim());
    }

@@ -25,7 +25,7 @@ class HtmlUnit {
 		    	 		log.pln
 		    	 		try{
 			    	 			var sheetIndex =  0
-				    	 		var excel = new Excel()
+				    	 		var excel = new com.Kei.Excel()
 				    	 		excel.ReadExcel(excel.getSheet(file.trim().replace(")", ""),sheetIndex),20,0)
 		    	 		}catch{
 		    	 		  		case e:Exception => throw log.err(e)
