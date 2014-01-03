@@ -95,16 +95,6 @@ class ExcelTest{
 	val actionDslFile = targetDirectory+"xbsdsl.xls"
 	
 	
-//	@Test def ConvertLineTest()={;
-//		var fileSpecification = "$ss"
-//		var excel = new Excel()
-//		var line = "1    SS130829-0010    800103    2013/9/2 10:22:21    3540021    0492516850 学校法人藤花学園富士見台幼稚園     埼玉県富士見市鶴馬３５１３－１階事務室     0492516850    13373620    田中　浩    黒    ミズイロ".split("\t").toList
-//		var pricedata = excel.ReadExcel(excel.getSheet(priceTable,0),13,4)
-//		var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
-//		var list = convertLine(line, pricedata, actionDsl,fileSpecification, null)
-//		println("size| "+list.size)
-//	}
-	
 	
 	
 	
