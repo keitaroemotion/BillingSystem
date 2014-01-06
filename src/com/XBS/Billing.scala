@@ -14,6 +14,7 @@ class Billing {
 	def ExecuteFile(infile:String, actionDslFile:Map[String,List[List[String]]], eunit:ExtraDatabaseUnit, pattkey:String)={
     		log.println
     		try{
+    				
 	    		    import java.util.Date
 			   	var book = new HSSFWorkbook()
 			   	var sheet = book.createSheet()
@@ -22,6 +23,7 @@ class Billing {
 				var out = new Output()
 				WriteBodyAccordingAsDataType(lines, sheet,out, book)
 	    		    WriteAllSum(book, sheet, lines, out)
+	    		    println("a")
 		        out.CreateOutExcelFile(lines, book)
     		}catch{
 	    		  case e:Exception => log.println("ERROR| "+e.getMessage)
@@ -85,18 +87,23 @@ class Billing {
    //var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
    def Analyze(infile:String, actionDsl:Map[String,List[List[String]]], pattkey:String, eunit:ExtraDatabaseUnit):DslUnit={
 	    		log.println
-	    		var excel = new com.Kei.Excel()
-		    var priceTable = popDsl(actionDsl,pattkey,".price")
-		    var keyIndex = popNumber(popDsl(actionDsl,pattkey,".keyindex"))
-		    var extractor  = popNumber(popDsl(actionDsl,pattkey,".extractor"))
-			var pricedata = excel.ReadExcel(excel.getSheet(priceTable,popPriceSheetNum(actionDsl,pattkey)),13,keyIndex)
-			var listifiedInfile =  new Dsl().ListifyInfile(infile)
-			var unit = new DslUnit()
-			unit.convertedData =  new Billing().ConvertFile(listifiedInfile, pricedata, actionDsl,pattkey,extractor,eunit)
-			unit.dsl = actionDsl(pattkey)
-			unit.dslext = actionDsl
-			unit.idkey = pattkey
-			unit
+	    		try{
+		    		var excel = new com.Kei.Excel()
+			    var priceTable = popDsl(actionDsl,pattkey,".price")
+			    var keyIndex = popNumber(popDsl(actionDsl,pattkey,".keyindex"))
+			    var extractor  = popNumber(popDsl(actionDsl,pattkey,".extractor"))
+				var pricedata = excel.ReadExcel(excel.getSheet(priceTable,popPriceSheetNum(actionDsl,pattkey)),13,keyIndex)
+				log.pln("pricedata.size | "+pricedata.size+" keyIndex| "+keyIndex)
+				var listifiedInfile =  new Dsl().ListifyInfile(infile)
+				var unit = new DslUnit()
+				unit.convertedData =  new Billing().ConvertFile(listifiedInfile, pricedata, actionDsl,pattkey,extractor,eunit)
+				unit.dsl = actionDsl(pattkey)
+				unit.dslext = actionDsl
+				unit.idkey = pattkey
+				unit
+	    		}catch{
+	    		  case e:Exception => throw log.err(e)
+	    		}
 	}
   
    
@@ -114,19 +121,24 @@ class Billing {
 	   }
 
 	private def DatabasifyHtmlsInFolder(directory:String): List[List[String]]= {
-		  log.pln
-	      import java.io._
-		  import com.XBS._
-		  var iox = new IOX()
-	      var list = List[List[String]]()
-	      var hunit = new HtmlUnit()
-		  for( file <- iox.GetFiles(directory).filter( _.getName.endsWith(".html") ))
-			   	list = list.:::(hunit.ParseHtml(file.toString))
-	      list
+    		 try{	
+			  log.pln
+		      import java.io._
+			  import com.XBS._
+			  var iox = new IOX()
+		      var list = List[List[String]]()
+		      var hunit = new HtmlUnit()
+			  for( file <- iox.GetFiles(directory).filter( _.getName.endsWith(".html") ))
+				   	list = list.:::(hunit.ParseHtml(file.toString))
+		      list
+    		 }catch{
+    		   case e:Exception => throw log.err(e)
+    		 }
 	}
 	
 	def ConvertFile(lines:List[List[String]], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]] ,fileSpecification:String, extractor:Int, eunit:ExtraDatabaseUnit):List[List[String]]={
     			log.println
+    			try{
     			 var lists = List[List[String]]()
 			 var prevlist = List[String]()
 			 for(line <- lines){
@@ -135,19 +147,26 @@ class Billing {
 				   prevlist = lineConverted
 			 }
 			 lists.reverse
+    			}catch{
+    			  case e:Exception => throw log.err(e)
+    			}
 	}
 	
 	def popPatternKey(containingFolder:String, actionDsl:Map[String,List[List[String]]]):String={
-    	 	log.println
-		 var pattkey = ""
-		 actionDsl("$pattern").foreach(line =>{
-	             if(containingFolder.trim().endsWith(line(1).replace("dir.eq(","").replace(")","").trim())){
-	               	pattkey = line(2)   
-	             }
-	   	 }
-		 )
-			if(pattkey == ""){ throw new Exception("patternkey is not detected:"+containingFolder)}
-			pattkey
+    		try{
+	    	 	log.println
+			 var pattkey = ""
+			 actionDsl("$pattern").foreach(line =>{
+		             if(containingFolder.trim().endsWith(line(1).replace("dir.eq(","").replace(")","").trim())){
+		               	pattkey = line(2)   
+		             }
+		   	 }
+			 )
+				if(pattkey == ""){ throw new Exception("patternkey is not detected:"+containingFolder)}
+				pattkey
+    		}catch{
+    		  	case e:Exception => throw log.err(e)
+    		}
 	}
 	
 	def popPreviousNumber(dslcount:Int, previousline:List[String]):String={
@@ -162,93 +181,121 @@ class Billing {
 	
 	def setUsualValue(line:List[String], dsline:List[String]):String={
     		log.println
-		 val idx = dsline(3).replace("#","").trim().toInt
-		 if(line.size > idx){
-			 return line(idx)
-		 }
-		 ""
+    		try{
+			 val idx = dsline(3).replace("#","").trim().toInt
+			 if(line.size > idx){
+				 return line(idx)
+			 }
+			 ""
+    		}catch{
+    		  case e:Exception => throw log.err(e)
+    		}
 	}
 	
   	 val priceCommand = "$p("
 	 val dateCommand =    "$date"
      def SelectFromPriceTable(eunit:ExtraDatabaseUnit, pricekey:String, orderNumKey:String, exvalue:String, comms:List[String]):String={
-  	   			println("pk| "+pricekey)
-  	   			var value = exvalue
-  	   			var htmlKey = eunit.Html(orderNumKey)
-			    var pline = eunit.PriceTable(pricekey)(0)
-    				var c = 0
-    				for(h <- htmlKey){
-    						if(h.htmlIndex == pline(h.priceFileIndex)){c = c + 1}
-    				}
-    				if(c == htmlKey.size){
-    						value = pline(comms(2).replace(">(", "").toInt)
-    				}
-    				value
+  	   			log.pln
+  	   			try{
+	  	   			var value = exvalue
+	  	   			var htmlKey = eunit.Html(orderNumKey)
+				    var pline = eunit.PriceTable(pricekey)(0)
+	    				var c = 0
+	    				for(h <- htmlKey){
+	    						if(h.htmlIndex == pline(h.priceFileIndex)){c = c + 1}
+	    				}
+	    				if(c == htmlKey.size){
+	    						value = pline(comms(2).replace(">(", "").toInt)
+	    				}
+	    				value
+  	   			}catch{
+  	   			  case e:Exception => throw log.err(e)
+  	   			}
 	}
 	  
   	 def popValueFromExtraPriceMaster(indexColumn:String,line:List[String],eunit:ExtraDatabaseUnit, xval:String):String={
-  	   				  println("indexColumn | "+indexColumn)
-  	   			      var value = xval
-                      var comms = indexColumn.split("|")(1).replace("if(line(", "").split(')').toList
-                    	  var orderNumKey = line(comms(0).toInt)
-                    	  println("orderNumKey  | "+orderNumKey )
-                      if (orderNumKey.startsWith(comms(1).replace("*",""))){
-                    	  	    for(pricekey <- eunit.PriceTable.keys)
-                    	  	    			value = SelectFromPriceTable(eunit, pricekey, orderNumKey, value, comms) 
-                      }
-  	   				  value
+  	   				log.pln
+  	   					try{
+		  	   				  log.pln("indexColumn | "+indexColumn)
+		  	   			      var value = xval
+		                      var comms = indexColumn.split("|")(1).replace("if(line(", "").split(')').toList
+		                    	  var orderNumKey = line(comms(0).toInt)
+		                    	  log.pln("orderNumKey  | "+orderNumKey )
+		                      if (orderNumKey.startsWith(comms(1).replace("*",""))){
+		                    	  	    for(pricekey <- eunit.PriceTable.keys)
+		                    	  	    			value = SelectFromPriceTable(eunit, pricekey, orderNumKey, value, comms) 
+		                      }
+		  	   				  value
+  	   					}catch{
+  	   					  	 case e:Exception => return log.err(e).getMessage().toString
+  	   					}
   	 }
   	 
 	def convertLine(line:List[String], pricedata: Map[String,List[List[String]]], actionDsl:Map[String,List[List[String]]], fileSpecification:String, previousline:List[String], extractor:Int,eunit:ExtraDatabaseUnit):List[String]={
     		log.println
-		 var list = List[String]()
-		 var dslSelected = actionDsl(fileSpecification).reverse
-		 
-		 for(dslcount <- 0 to dslSelected.size-1){
-			    var value = ""	
-			 	var dsline = dslSelected(dslcount)
-			 	var formatColumn = dsline(2).trim
-			 	var indexColumn = dsline(3).trim
-			 	var attribueColumn = dsline(4) .trim
-			 	
-			 	if(indexColumn.contains("|if(line")){
-			 	    value = popValueFromExtraPriceMaster(indexColumn,line,eunit, value)
- 			 	}else if(dsline.size>4 && attribueColumn == dateCommand ){
-			 		  value = setUsualValue(line,dsline) 
-			 	}else if(dsline.size>4 && attribueColumn.endsWith("++")){
-			 		 value = popPreviousNumber(dslcount, previousline)
-			 	}else if(indexColumn.startsWith(priceCommand)){
-			 		 value = GetPrice(value, pricedata, line,extractor, dsline)
-			 	}else if(dsline.size>4 && formatColumn == ""&& attribueColumn == "" && indexColumn != ""  ){
-			 		 value = setUsualValue(line,dsline)
-			 	}
-			    list = list.+:(value)
-		 }
-		 list.reverse
+    		try{	
+			 var list = List[String]()
+			 var dslSelected = actionDsl(fileSpecification).reverse
+			 
+			 for(dslcount <- 0 to dslSelected.size-1){
+				    var value = ""	
+				 	var dsline = dslSelected(dslcount)
+				 	var formatColumn = dsline(2).trim
+				 	var indexColumn = dsline(3).trim
+				 	var attribueColumn = dsline(4) .trim
+				 	
+				 	if(indexColumn.contains("|if(line")){
+				 	    value = popValueFromExtraPriceMaster(indexColumn,line,eunit, value)
+	 			 	}else if(dsline.size>4 && attribueColumn == dateCommand ){
+				 		  value = setUsualValue(line,dsline) 
+				 	}else if(dsline.size>4 && attribueColumn.endsWith("++")){
+				 		 value = popPreviousNumber(dslcount, previousline)
+				 	}else if(indexColumn.startsWith(priceCommand)){
+				 		 value = GetPrice(value, pricedata, line,extractor, dsline)
+				 	}else if(dsline.size>4 && formatColumn == ""&& attribueColumn == "" && indexColumn != ""  ){
+				 		 value = setUsualValue(line,dsline)
+				 	}
+				    list = list.+:(value)
+			 }
+			 list.reverse
+    		}catch{
+    		  case e:Exception => throw log.err(e)
+    		}
 	}
 	
 	
 	def GetPrice(valueString:String, pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int, dsline:List[String]):String={
     			log.println
-    			var value = valueString
-    			
-    			if(PopPrice(pricedata, line, extractor) == "" ){
-			 		    value = "-1"
-	 		}else{
-			 		var priceToggle = dsline(3).replace(priceCommand , "").replace(")","").trim()
-			 		if(priceToggle.contains('+')||priceToggle.contains('-')||priceToggle.contains('*')||priceToggle.contains('/')){
-				 		value = new Calc().caluculateUnit(priceToggle,pricedata(line(extractor))(0)).toString
-			 		}else{
-			 			value = popPrice(pricedata, line, extractor, priceToggle)
-			 		}
-	 		}
-			value
+    			try{
+	    			var value = valueString
+	    			
+	    			log.plnx("extractor:"+extractor + "}} "+line(extractor),"price")
+	    			
+	    			
+//	    			var priceToggle0 = dsline(3).replace(priceCommand , "").replace(")","").trim().replace("(", "").toInt
+//	    			println(priceToggle0)
+	    			
+//	    			if(PopPrice(pricedata, line, extractor, priceToggle0) == "" ){
+//				 		    value = "-1"
+//		 		}else{
+				 		var priceToggle = dsline(3).replace(priceCommand , "").replace(")","").trim()
+				 		if(priceToggle.contains('+')||priceToggle.contains('-')||priceToggle.contains('*')||priceToggle.contains('/')){
+					 		value = new Calc().caluculateUnit(priceToggle,pricedata(line(extractor))(0)).toString
+				 		}else{
+				 			value = popPrice(pricedata, line, extractor, priceToggle)
+				 		}
+//		 		}
+				value
+    			}catch{
+    			  case e:Exception => return log.err(e).toString
+    			}
 	}
 	
-	def PopPrice(pricedata:Map[String,List[List[String]]], line:List[String], extractor:Int):String={
+	def PopPrice(pricedata:Map[String,List[List[String]]], line:List[String], keyPositionInLine:Int, keyIndex:Int):String={
 	    			   log.println
 				   try{
-					   		pricedata(line(extractor))(0)(0)
+					   		log.plnx("pricedata(line(extractor))(0) | "+pricedata(line(keyPositionInLine))(0),"price")
+					   		pricedata(line(keyPositionInLine))(0)(keyIndex)
 				   }catch{
 				     		case e:Exception => ""
 				   }

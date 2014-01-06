@@ -18,17 +18,17 @@ class ExcelTest{
   val priceTableSample = targetDirectory+"xportal_price.xls"
   
   def ReadActionDsl(file:String):Map[String,List[List[String]]]={
-	  var ex = new Excel	  
+	  var ex = new com.Kei.Excel	  
 	  ex.ReadExcel(ex.getSheet(actionDslFile,0),13,0)
   }
   
-  @Test def WriteDataToExcelTest{
-   	   var actionDsl = ReadActionDsl(actionDslFile)
-   	   var bill = new Billing
-   	   val pattkey = bill.popPatternKey(bill.popContainingFolder(infile), actionDsl )
-       var extraData = bill.PopXtraDatabaseUnit(actionDslFile, "$ss")
-	   bill.ExecuteFile(infile,actionDsl,extraData,pattkey)
-  } 
+//  @Test def WriteDataToExcelTest{
+//   	   var actionDsl = ReadActionDsl(actionDslFile)
+//   	   var bill = new Billing
+//   	   val pattkey = bill.popPatternKey(bill.popContainingFolder(infile), actionDsl )
+//       var extraData = bill.PopXtraDatabaseUnit(actionDslFile, "$ss")
+//	   bill.ExecuteFile(infile,actionDsl,extraData,pattkey)
+//  } 
   
   
   //var actionDsl = ReadActionDsl(actionDslFile)
@@ -40,48 +40,53 @@ class ExcelTest{
   @Test def  DirectoryLevelExecutionTest{
     	   var bill = new Billing
 	   var actiondsl = ReadActionDsl(actionDslFile)
-	   val pattkey = bill.popPatternKey(bill.popContainingFolder(infile), actiondsl)
+	   //val pattkey = bill.popPatternKey(bill.popContainingFolder(infile), actiondsl)
+	   val pattkey = "$ss"
 	   var datekey = ""
 	   var infiledir = actiondsl("infiledir")(0)(1)+datekey
 	   var iox = new IOX()
 	   var extraData = bill.PopXtraDatabaseUnit(actionDslFile, pattkey)
-	   for(directory <- iox.GetFiles(infiledir).filter(!_.getName.contains('.') ))
-		   for(file <- iox.GetFiles(directory.getAbsolutePath).filter(_.getName.endsWith(".txt"))){		
-		        bill.ExecuteFile(file.toPath.toString,actiondsl,extraData,pattkey)
-			   	println("dirlevel | "+file.toString)
-		   }
+	   println("infiledir | "+infiledir)
+	   //for(directory <- iox.GetFiles(infiledir).filter(!_.getName.contains('.') )){
+	     //println("a-----"+directory.getAbsolutePath);
+		   //for(file <- iox.GetFiles(directory.getAbsolutePath).filter(_.getName.endsWith(".txt"))){
+		     for(file <- iox.GetFiles(infiledir).filter(_.getName.endsWith(".txt"))){
+		        bill.ExecuteFile(file.toString,actiondsl,extraData,pattkey)
+		     }
+		   //}
+	   //}
 	} 
   
-   @Test def PriceTotalTest{
-        var book = new HSSFWorkbook
-	   	var sheet = book.createSheet
-	   	var cell = sheet.createRow(1).createCell(10);
-        cell.setCellValue(102)
-        var cell2 = sheet.createRow(2).createCell(10);
-        cell2.setCellValue(100)
-        var cell12 = sheet.createRow(3).createCell(10);
-        cell12.setCellValue(100)
-		var fileOut = new FileOutputStream("/Users/keitaroemotion/dev/garage/xbs/calctest.xls");
-	    book.write(fileOut);
-	    fileOut.close;
-   }
+//   @Test def PriceTotalTest{
+//        var book = new HSSFWorkbook
+//	   	var sheet = book.createSheet
+//	   	var cell = sheet.createRow(1).createCell(10);
+//        cell.setCellValue(102)
+//        var cell2 = sheet.createRow(2).createCell(10);
+//        cell2.setCellValue(100)
+//        var cell12 = sheet.createRow(3).createCell(10);
+//        cell12.setCellValue(100)
+//		var fileOut = new FileOutputStream("/Users/keitaroemotion/dev/garage/xbs/calctest.xls");
+//	    book.write(fileOut);
+//	    fileOut.close;
+//   }
 	
 	val infile = targetDirectory+"ssinfile.txt"
-	  
-	@Test def popDirectoryTest{
-		import scala.io._
-		println("|> "+new File(infile).getParent())
-	  
-	}  
-	  
-	@Test def ReadTextInputTest{
-		  println("")
-		  println("ReadTextInputTest")
-		  new Dsl().ListifyInfile(infile).foreach(line =>{
-		    println()
-		  })
-	}
-	
+//	  
+//	@Test def popDirectoryTest{
+//		import scala.io._
+//		println("|> "+new File(infile).getParent())
+//	  
+//	}  
+//	  
+//	@Test def ReadTextInputTest{
+//		  println("")
+//		  println("ReadTextInputTest")
+//		  new Dsl().ListifyInfile(infile).foreach(line =>{
+//		    println()
+//		  })
+//	}
+//	
 	
 //	@Test def FilterFileTest()={
 //	     print("|.. "+infile)
@@ -93,12 +98,13 @@ class ExcelTest{
 	 
 	
 	val actionDslFile = targetDirectory+"xbsdsl.xls"
+
+	
 	
 	
 //	@Test def ConvertLineTest()={;
 //		var fileSpecification = "$ss"
 //		var excel = new Excel()
-//		var line = "1    SS130829-0010    800103    2013/9/2 10:22:21    3540021    0492516850 学校法人藤花学園富士見台幼稚園     埼玉県富士見市鶴馬３５１３－１階事務室     0492516850    13373620    田中　浩    黒    ミズイロ".split("\t").toList
 //		var pricedata = excel.ReadExcel(excel.getSheet(priceTable,0),13,4)
 //		var actionDsl = excel.ReadExcel(excel.getSheet(actionDslFile,0),13,0)
 //		var list = convertLine(line, pricedata, actionDsl,fileSpecification, null)
